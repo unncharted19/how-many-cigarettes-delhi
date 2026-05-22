@@ -12,7 +12,7 @@ import { haversineDistance } from './lib/haversine';
 
 function App() {
   const stations = useDelhiAQI();
-  const [minutesOutside, setMinutesOutside] = useState(30);
+  const [minutesOutside, setMinutesOutside] = useState(60);
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [locationName, setLocationName] = useState('Delhi Average');
   const [pincode, setPincode] = useState<string | undefined>(undefined);
@@ -45,15 +45,6 @@ function App() {
     setPincode(area.pincode);
     setDistance(dist);
   };
-
-  const tierLabels = [
-    { label: 'Clean', color: '#16a34a', range: '<0.5' },
-    { label: 'Moderate', color: '#65a30d', range: '0.5-1' },
-    { label: 'Poor', color: '#ca8a04', range: '1-1.5' },
-    { label: 'Unhealthy', color: '#ea580c', range: '1.5-2.5' },
-    { label: 'Very Unhealthy', color: '#dc2626', range: '2.5-4' },
-    { label: 'Hazardous', color: '#7f1d1d', range: '4+' },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -95,9 +86,16 @@ function App() {
         />
 
         <div className="mt-12 pt-8 border-t border-gray-800">
-          <h3 className="text-gray-500 text-sm font-medium mb-4">Cigarette Equivalents</h3>
+          <h3 className="text-gray-500 text-sm font-medium mb-4">PM2.5 µg/m³</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
-            {tierLabels.map((tier) => (
+            {[
+              { label: 'Good', color: '#16a34a', range: '<30' },
+              { label: 'Satisfactory', color: '#65a30d', range: '30-60' },
+              { label: 'Moderate', color: '#ca8a04', range: '60-90' },
+              { label: 'Poor', color: '#ea580c', range: '90-120' },
+              { label: 'Very Poor', color: '#dc2626', range: '120-250' },
+              { label: 'Severe', color: '#7f1d1d', range: '250+' },
+            ].map((tier) => (
               <div key={tier.label} className="flex items-center gap-2">
                 <div
                   className="w-4 h-4 rounded"

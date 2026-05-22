@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { Download, Share2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import { Station } from '../data/stations';
-import { calculateCigarettes, getTier, formatDuration } from '../lib/cigarettes';
+import { calculateCigarettes, getCigaretteTier, getPm25Tier, formatDuration } from '../lib/cigarettes';
 
 interface ShareCardProps {
   location: string;
@@ -17,7 +17,8 @@ export function ShareCard({ location, pincode, distance, station, minutesOutside
 
   const pm25 = station?.pm25 || 0;
   const cigarettes = calculateCigarettes(pm25, minutesOutside);
-  const tier = getTier(cigarettes);
+  const cigaretteTier = getCigaretteTier(cigarettes);
+  const pm25Tier = getPm25Tier(pm25);
 
   const handleSave = async () => {
     if (!cardRef.current) return;
@@ -80,7 +81,7 @@ export function ShareCard({ location, pincode, distance, station, minutesOutside
               className="font-bold leading-none"
               style={{
                 fontSize: '96px',
-                color: tier.color,
+                color: cigaretteTier.color,
               }}
             >
               {cigarettes.toFixed(1)}
@@ -93,8 +94,8 @@ export function ShareCard({ location, pincode, distance, station, minutesOutside
           </p>
 
           <div className="mt-6 flex items-center gap-2">
-            <span style={{ color: tier.color }} className="text-sm font-medium">
-              {tier.label}
+            <span style={{ color: pm25Tier.color }} className="text-sm font-medium">
+              {pm25Tier.label}
             </span>
             <span className="text-gray-600">·</span>
             <span className="text-gray-500 text-sm">{pm25} µg/m³ PM2.5</span>

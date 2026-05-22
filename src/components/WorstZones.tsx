@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Station } from '../data/stations';
-import { calculateCigarettes, getTier } from '../lib/cigarettes';
+import { calculateCigarettes, getCigaretteTier } from '../lib/cigarettes';
 
 interface WorstZonesProps {
   stations: Station[];
@@ -28,7 +28,7 @@ export function WorstZones({ stations, minutesOutside, onStationClick }: WorstZo
       </div>
       <div className="space-y-2">
         {worstStations.map((station, index) => {
-          const tier = getTier(station.cigarettes);
+          const tier = getCigaretteTier(station.cigarettes);
           return (
             <button
               key={station.id}
