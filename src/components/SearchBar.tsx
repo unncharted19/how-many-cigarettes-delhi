@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Search } from 'lucide-react';
 import { areas, Area } from '../data/areas';
-import { stations, Station } from '../data/stations';
+import { Station } from '../hooks/useDelhiAQI';
 import { findAreaByPincode, findAreaByName, findNearestStation } from '../lib/haversine';
 
 interface SearchBarProps {
+  stations: Station[];
   onSelectArea: (area: Area, station: Station) => void;
 }
 
-export function SearchBar({ onSelectArea }: SearchBarProps) {
+export function SearchBar({ stations, onSelectArea }: SearchBarProps) {
   const [query, setQuery] = useState('');
   const [error, setError] = useState('');
 

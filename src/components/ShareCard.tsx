@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Download, Share2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
-import { Station } from '../data/stations';
+import { Station } from '../hooks/useDelhiAQI';
 import { calculateCigarettes, getCigaretteTier, getPm25Tier, formatDuration } from '../lib/cigarettes';
 
 interface ShareCardProps {

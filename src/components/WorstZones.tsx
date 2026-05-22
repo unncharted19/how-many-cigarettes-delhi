@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
-import { Station } from '../data/stations';
+import { Station } from '../hooks/useDelhiAQI';
 import { calculateCigarettes, getCigaretteTier } from '../lib/cigarettes';
 
 interface WorstZonesProps {

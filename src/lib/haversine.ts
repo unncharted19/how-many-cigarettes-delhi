@@ -1,4 +1,4 @@
-import { Station } from '../data/stations';
+import { Station } from '../hooks/useDelhiAQI';
 import { Area } from '../data/areas';
 
 export function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {

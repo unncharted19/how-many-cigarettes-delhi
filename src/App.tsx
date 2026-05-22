@@ -1,17 +1,17 @@
 import { useState, useMemo } from 'react';
-import { Cigarette } from 'lucide-react';
+import { Cigarette, AlertCircle } from 'lucide-react';
 import { useDelhiAQI } from './hooks/useDelhiAQI';
 import { Heatmap } from './components/Heatmap';
 import { TimeSelector } from './components/TimeSelector';
 import { SearchBar } from './components/SearchBar';
 import { WorstZones } from './components/WorstZones';
 import { ShareCard } from './components/ShareCard';
-import { Station } from './data/stations';
+import { Station } from './hooks/useDelhiAQI';
 import { Area } from './data/areas';
 import { haversineDistance } from './lib/haversine';
 
 function App() {
-  const stations = useDelhiAQI();
+  const { data: stations, loading, error, stale } = useDelhiAQI();
   const [minutesOutside, setMinutesOutside] = useState(60);
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [locationName, setLocationName] = useState('Delhi Average');
@@ -19,6 +19,7 @@ function App() {
   const [distance, setDistance] = useState<number | undefined>(undefined);
 
   const delhiAverageStation = useMemo(() => {
+    if (loading || stations.length === 0) return null;
     const avgPm25 = stations.reduce((sum, s) => sum + s.pm25, 0) / stations.length;
     return {
       id: 'delhi-average',
@@ -26,8 +27,9 @@ function App() {
       lat: 28.6139,
       lng: 77.2090,
       pm25: Math.round(avgPm25),
+      lastUpdate: stations[0]?.lastUpdate || '',
     };
-  }, [stations]);
+  }, [stations, loading]);
 
   const currentStation = selectedStation || delhiAverageStation;
 
@@ -57,33 +59,55 @@ function App() {
           <TimeSelector minutes={minutesOutside} onChange={setMinutesOutside} />
         </div>
 
-        <div className="rounded-2xl overflow-hidden mb-6" style={{ background: '#0a0a0a' }}>
-          <div className="h-[350px] md:h-[600px]">
-            <Heatmap
-              stations={stations}
-              minutesOutside={minutesOutside}
-              onStationClick={handleStationClick}
-              selectedStation={selectedStation}
-            />
+        {stale && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-yellow-900/30 border border-yellow-700/50 rounded-lg text-yellow-300 text-sm">
+            <AlertCircle size={16} />
+            <span>Showing cached data (API unavailable)</span>
           </div>
-        </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          <SearchBar onSelectArea={handleAreaSelect} />
-          <WorstZones
-            stations={stations}
-            minutesOutside={minutesOutside}
-            onStationClick={handleStationClick}
-          />
-        </div>
+        {error && !stale && (
+          <div className="mb-4 flex items-center gap-2 px-4 py-2 bg-red-900/30 border border-red-700/50 rounded-lg text-red-300 text-sm">
+            <AlertCircle size={16} />
+            <span>{error}</span>
+          </div>
+        )}
 
-        <ShareCard
-          location={locationName}
-          pincode={pincode}
-          distance={distance}
-          station={currentStation}
-          minutesOutside={minutesOutside}
-        />
+        {loading ? (
+          <div className="rounded-2xl mb-6 flex items-center justify-center h-[350px] md:h-[600px]" style={{ background: '#0a0a0a' }}>
+            <div className="text-gray-400">Loading air quality data...</div>
+          </div>
+        ) : (
+          <>
+            <div className="rounded-2xl overflow-hidden mb-6" style={{ background: '#0a0a0a' }}>
+              <div className="h-[350px] md:h-[600px]">
+                <Heatmap
+                  stations={stations}
+                  minutesOutside={minutesOutside}
+                  onStationClick={handleStationClick}
+                  selectedStation={selectedStation}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <SearchBar stations={stations} onSelectArea={handleAreaSelect} />
+              <WorstZones
+                stations={stations}
+                minutesOutside={minutesOutside}
+                onStationClick={handleStationClick}
+              />
+            </div>
+
+            <ShareCard
+              location={locationName}
+              pincode={pincode}
+              distance={distance}
+              station={currentStation}
+              minutesOutside={minutesOutside}
+            />
+          </>
+        )}
 
         <div className="mt-12 pt-8 border-t border-gray-800">
           <h3 className="text-gray-500 text-sm font-medium mb-4">PM2.5 µg/m³</h3>

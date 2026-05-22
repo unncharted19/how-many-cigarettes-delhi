@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Delaunay } from 'd3-delaunay';
-import { Station, labeledStations } from '../data/stations';
+import { Station } from '../hooks/useDelhiAQI';
+import { labeledStations } from '../data/stations';
 import { calculateCigarettes, getPm25TierColor } from '../lib/cigarettes';
 
 interface HeatmapProps {
