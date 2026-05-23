@@ -49,15 +49,8 @@ export function getPm25TierColor(pm25: number): string {
 }
 
 export function formatDuration(minutes: number): string {
-  if (minutes < 60) {
-    return `${minutes} min`;
-  }
+  if (minutes < 60) return `${minutes} min`;
+  if (minutes === 1440) return 'a full day';
   const hours = minutes / 60;
-  if (hours === 1) {
-    return '1 hour';
-  }
-  if (hours === 6) {
-    return '6 hours';
-  }
-  return `${hours} hours`;
+  return `${hours} hour${hours !== 1 ? 's' : ''}`;
 }

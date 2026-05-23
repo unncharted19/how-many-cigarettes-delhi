@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 export interface Station {
   id: string;
   name: string;
+  city?: string;
   lat: number;
   lng: number;
   pm25: number;
@@ -21,12 +22,14 @@ interface UseDelhiAQIResult {
   stale: boolean;
 }
 
-const CACHE_KEY = 'delhi_aqi_v1';
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutes in ms
-const REFETCH_INTERVAL = 30 * 60 * 1000; // 30 minutes in ms
+const CACHE_KEY = 'ncr_aqi_v1'; // bumped — clears old Delhi-only cache
+const CACHE_TTL = 30 * 60 * 1000;
+const REFETCH_INTERVAL = 30 * 60 * 1000;
 
-function cleanStationName(rawName: string): string {
-  return rawName
+const NCR_CITIES = ['Delhi', 'Gurugram', 'Faridabad', 'Noida', 'Ghaziabad'];
+
+function cleanName(raw: string): string {
+  return raw
     .replace(/\s*-\s*(DPCC|CPCB)$/, '')
     .trim();
 }
@@ -35,12 +38,8 @@ function getCachedData(): { stations: Station[]; stale: boolean } | null {
   try {
     const cached = localStorage.getItem(CACHE_KEY);
     if (!cached) return null;
-
     const data: CacheData = JSON.parse(cached);
-    const age = Date.now() - data.timestamp;
-    const stale = age > CACHE_TTL;
-
-    return { stations: data.stations, stale };
+    return { stations: data.stations, stale: Date.now() - data.timestamp > CACHE_TTL };
   } catch {
     return null;
   }
@@ -48,14 +47,8 @@ function getCachedData(): { stations: Station[]; stale: boolean } | null {
 
 function setCachedData(stations: Station[]): void {
   try {
-    const data: CacheData = {
-      timestamp: Date.now(),
-      stations,
-    };
-    localStorage.setItem(CACHE_KEY, JSON.stringify(data));
-  } catch (err) {
-    console.error('Failed to cache data:', err);
-  }
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ timestamp: Date.now(), stations }));
+  } catch { /* ignore */ }
 }
 
 export function useDelhiAQI(): UseDelhiAQIResult {
@@ -65,92 +58,80 @@ export function useDelhiAQI(): UseDelhiAQIResult {
   const [stale, setStale] = useState(false);
 
   const fetchData = async (isRefetch = false) => {
-    if (!isRefetch) {
-      setLoading(true);
-    }
+    if (!isRefetch) setLoading(true);
 
     const apiKey = import.meta.env.VITE_DATAGOV_KEY;
     if (!apiKey) {
       setError('Missing VITE_DATAGOV_KEY environment variable');
       setLoading(false);
-
-      // Try fallback to cache
       const cached = getCachedData();
-      if (cached) {
-        setData(cached.stations);
-        setStale(true);
-      }
+      if (cached) { setData(cached.stations); setStale(true); }
       return;
     }
 
+    const fetchCity = async (city: string): Promise<{ records: Record<string, string>[] }> => {
+      const url =
+        `https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69` +
+        `?api-key=${apiKey}&format=json` +
+        `&filters[city]=${encodeURIComponent(city)}&limit=500`;
+      const res = await fetch(url);
+      if (!res.ok) return { records: [] };
+      return res.json();
+    };
+
     try {
-      const url = `https://api.data.gov.in/resource/3b01bcb8-0b14-4abf-b6f2-c1bfd384ba69?api-key=${apiKey}&format=json&filters[city]=Delhi&limit=500`;
+      // Parallel fetch for all NCR cities
+      const cityResults = await Promise.all(NCR_CITIES.map(fetchCity));
 
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`API request failed: ${response.status}`);
+      // Gurgaon fallback — some API responses use old spelling
+      if ((cityResults[1].records || []).length === 0) {
+        const fallback = await fetchCity('Gurgaon');
+        cityResults[1] = fallback;
       }
 
-      const json = await response.json();
-
-      if (!json.records || !Array.isArray(json.records)) {
-        throw new Error('Invalid API response format');
-      }
-
-      // Filter to PM2.5 only
-      const pm25Records = json.records.filter(
-        (r: Record<string, string>) => r.pollutant_id === 'PM2.5'
+      // Flatten with city tag
+      const tagged = cityResults.flatMap((result, idx) =>
+        (result.records || []).map(rec => ({ rec, city: NCR_CITIES[idx] }))
       );
 
-      // Parse and clean
+      // Build station map; dedup by city:cleanedName
       const stationMap = new Map<string, Station>();
 
-      for (const record of pm25Records) {
-        const avgValue = parseFloat(record.avg_value);
-        if (isNaN(avgValue)) continue; // Skip "NA" values
-
-        const lat = parseFloat(record.latitude);
-        const lng = parseFloat(record.longitude);
+      for (const { rec, city } of tagged) {
+        if (rec.pollutant_id !== 'PM2.5') continue;
+        const avgValue = parseFloat(rec.avg_value);
+        if (isNaN(avgValue)) continue;
+        const lat = parseFloat(rec.latitude);
+        const lng = parseFloat(rec.longitude);
         if (isNaN(lat) || isNaN(lng)) continue;
+        const cleaned = cleanName(rec.station);
+        if (!cleaned) continue;
 
-        const cleanName = cleanStationName(record.station);
-        if (!cleanName) continue;
-
-        // Dedupe by cleaned name
-        if (!stationMap.has(cleanName)) {
-          stationMap.set(cleanName, {
-            id: cleanName.toLowerCase().replace(/\s+/g, '-'),
-            name: cleanName,
+        const key = `${city}:${cleaned}`;
+        if (!stationMap.has(key)) {
+          stationMap.set(key, {
+            id: `${city.toLowerCase()}-${cleaned.toLowerCase().replace(/\s+/g, '-')}`,
+            name: cleaned,
+            city,
             lat,
             lng,
             pm25: Math.round(avgValue),
-            lastUpdate: record.last_update || '',
+            lastUpdate: rec.last_update || '',
           });
         }
       }
 
       const stations = Array.from(stationMap.values());
-
-      if (stations.length === 0) {
-        throw new Error('No valid PM2.5 stations found');
-      }
-
-      console.log('Parsed Delhi AQI stations:', stations);
+      if (stations.length === 0) throw new Error('No valid PM2.5 stations found');
 
       setCachedData(stations);
       setData(stations);
       setError(null);
       setStale(false);
     } catch (err) {
-      console.error('Failed to fetch AQI data:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch data');
-
-      // Fallback to cached data (any age)
       const cached = getCachedData();
-      if (cached) {
-        setData(cached.stations);
-        setStale(true);
-      }
+      if (cached) { setData(cached.stations); setStale(true); }
     } finally {
       setLoading(false);
     }
@@ -158,13 +139,8 @@ export function useDelhiAQI(): UseDelhiAQIResult {
 
   useEffect(() => {
     fetchData();
-
-    // Refetch every 30 minutes
-    const intervalId = setInterval(() => {
-      fetchData(true);
-    }, REFETCH_INTERVAL);
-
-    return () => clearInterval(intervalId);
+    const id = setInterval(() => fetchData(true), REFETCH_INTERVAL);
+    return () => clearInterval(id);
   }, []);
 
   return { data, loading, error, stale };

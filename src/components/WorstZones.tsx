@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Station } from '../hooks/useDelhiAQI';
 import { calculateCigarettes, getCigaretteTier } from '../lib/cigarettes';
+import { cleanStationName } from './Heatmap';
 
 interface WorstZonesProps {
   stations: Station[];
@@ -38,8 +39,8 @@ export function WorstZones({ stations, minutesOutside, onStationClick }: WorstZo
               <div className="flex items-center gap-3">
                 <span className="text-gray-500 font-semibold text-sm w-5">{index + 1}</span>
                 <div>
-                  <p className="text-white font-medium">{station.name}</p>
-                  <p className="text-gray-400 text-sm">{station.pm25} µg/m³</p>
+                  <p className="text-white font-medium">{cleanStationName(station.name)}</p>
+                  <p className="text-gray-400 text-sm">{station.city ? `${station.city} · ` : ''}{station.pm25} µg/m³</p>
                 </div>
               </div>
               <div className="text-right">

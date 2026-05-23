@@ -12,7 +12,7 @@ interface ShareCardProps {
   minutesOutside: number;
 }
 
-export function ShareCard({ location, pincode, distance, station, minutesOutside }: ShareCardProps) {
+export function ShareCard({ location, distance, station, minutesOutside }: ShareCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const pm25 = station?.pm25 || 0;
@@ -28,7 +28,7 @@ export function ShareCard({ location, pincode, distance, station, minutesOutside
         pixelRatio: 2,
       });
       const link = document.createElement('a');
-      link.download = `delhi-air-${location.replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.download = `delhi-air-${location.replace(/, Delhi$/i, '').replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -41,7 +41,7 @@ export function ShareCard({ location, pincode, distance, station, minutesOutside
       try {
         await navigator.share({
           title: 'How Many Cigarettes?',
-          text: `The air in ${location} equals ${cigarettes.toFixed(1)} cigarettes in just ${formatDuration(minutesOutside)} outside. Check your area at HowManyCigarettes.com`,
+          text: `The air in ${location.replace(/, Delhi$/i, '')} equals ${cigarettes.toFixed(1)} cigarettes in ${formatDuration(minutesOutside)} outside. Check your area at HowManyCigarettes.com`,
         });
       } catch (err) {
         console.error('Failed to share:', err);
@@ -66,13 +66,12 @@ export function ShareCard({ location, pincode, distance, station, minutesOutside
 
           <div className="mb-6">
             <p className="text-gray-300 text-base">
-              Standing in <span className="text-white font-semibold">{location}</span>
-              {pincode && (
-                <span className="text-gray-500"> · {pincode}</span>
-              )}
-              {distance !== undefined && (
-                <span className="text-gray-500"> · {distance.toFixed(1)} km from station</span>
-              )}
+              Standing in <span className="text-white font-semibold">{location.replace(/, Delhi$/i, '')}</span>
+            </p>
+            <p className="text-gray-500 text-sm mt-1">
+              {distance !== undefined
+                ? `${distance.toFixed(1)} km from ${station?.name.replace(/,\s*Delhi/i, '').replace(/\s*-\s*(DPCC|CPCB|IITM)/i, '').trim() ?? 'station'} monitor · PM2.5 ${pm25} µg/m³`
+                : `PM2.5 ${pm25} µg/m³ · CPCB monitor`}
             </p>
           </div>
 
@@ -90,7 +89,7 @@ export function ShareCard({ location, pincode, distance, station, minutesOutside
           </div>
 
           <p className="text-gray-400 text-lg">
-            in just {formatDuration(minutesOutside)} outside
+            in {formatDuration(minutesOutside)} outside
           </p>
 
           <div className="mt-6 flex items-center gap-2">

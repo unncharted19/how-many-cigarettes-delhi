@@ -4,16 +4,16 @@ interface TimeSelectorProps {
 }
 
 const timeOptions = [
-  { label: '15 min', minutes: 15 },
-  { label: '30 min', minutes: 30 },
-  { label: '1 hour', minutes: 60 },
-  { label: '6 hours', minutes: 360 },
+  { label: '3h',  minutes: 180  },
+  { label: '6h',  minutes: 360  },
+  { label: '12h', minutes: 720  },
+  { label: '24h', minutes: 1440 },
 ];
 
 export function TimeSelector({ minutes, onChange }: TimeSelectorProps) {
   return (
     <div className="flex items-center gap-1 bg-gray-900 rounded-lg p-1">
-      {timeOptions.map((option) => (
+      {timeOptions.map(option => (
         <button
           key={option.minutes}
           onClick={() => onChange(option.minutes)}
