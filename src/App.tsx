@@ -12,7 +12,7 @@ import { LocationResult } from './types';
 
 function App() {
   const { data: stations, loading, error, stale } = useDelhiAQI();
-  const [minutesOutside, setMinutesOutside] = useState(360);
+  const [minutesOutside, setMinutesOutside] = useState(43200);
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [locationName, setLocationName] = useState('NCR Average');
   const [distance, setDistance] = useState<number | undefined>(undefined);
@@ -51,7 +51,7 @@ function App() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <Cigarette size={32} className="text-red-500" />
-            <h1 className="text-2xl font-bold">How Many Cigarettes? <span className="text-gray-500 font-normal text-lg">· Delhi NCR</span></h1>
+            <h1 className="text-2xl font-bold">How Many Cigarettes? <span className="text-gray-500 font-normal text-lg">· Delhi NCR · Live CPCB data</span></h1>
           </div>
           <TimeSelector minutes={minutesOutside} onChange={setMinutesOutside} />
         </div>
@@ -89,25 +89,30 @@ function App() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div className="mb-6">
               <SearchBar
                 stations={stations}
                 onResultSelect={handleLocationResult}
                 mapInstance={mapInstance}
               />
+            </div>
+
+            <div className="mb-8">
+              <ShareCard
+                location={locationName}
+                distance={distance}
+                station={currentStation}
+                minutesOutside={minutesOutside}
+              />
+            </div>
+
+            <div className="mb-8">
               <WorstZones
                 stations={stations}
                 minutesOutside={minutesOutside}
                 onStationClick={handleStationClick}
               />
             </div>
-
-            <ShareCard
-              location={locationName}
-              distance={distance}
-              station={currentStation}
-              minutesOutside={minutesOutside}
-            />
           </>
         )}
 

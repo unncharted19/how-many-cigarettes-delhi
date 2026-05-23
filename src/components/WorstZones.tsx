@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { AlertTriangle } from 'lucide-react';
 import { Station } from '../hooks/useDelhiAQI';
-import { calculateCigarettes, getCigaretteTier } from '../lib/cigarettes';
+import { calculateCigarettes, getCigaretteTier, formatCigCount } from '../lib/cigarettes';
 import { cleanStationName } from './Heatmap';
 
 interface WorstZonesProps {
@@ -18,7 +18,7 @@ export function WorstZones({ stations, minutesOutside, onStationClick }: WorstZo
         cigarettes: calculateCigarettes(station.pm25, minutesOutside),
       }))
       .sort((a, b) => b.cigarettes - a.cigarettes)
-      .slice(0, 4);
+      .slice(0, 6);
   }, [stations, minutesOutside]);
 
   return (
@@ -45,7 +45,7 @@ export function WorstZones({ stations, minutesOutside, onStationClick }: WorstZo
               </div>
               <div className="text-right">
                 <p className="font-bold" style={{ color: tier.color }}>
-                  {station.cigarettes.toFixed(1)}
+                  {formatCigCount(station.cigarettes)}
                 </p>
                 <p className="text-gray-500 text-xs">cigarettes</p>
               </div>

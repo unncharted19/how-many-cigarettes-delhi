@@ -261,7 +261,7 @@ export function SearchBar({ stations, onResultSelect, mapInstance }: SearchBarPr
           onChange={e => { setQuery(e.target.value); setHighlightedIdx(-1); }}
           onFocus={() => query.length >= 2 && setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search any place in Delhi NCR…"
+          placeholder="Search any place in Delhi NCR — IIT, Cyber Hub, Sector 18, anything…"
           autoComplete="off"
           className="w-full pl-9 pr-8 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-gray-500 transition-colors text-sm"
         />

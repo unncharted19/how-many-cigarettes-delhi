@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { Delaunay } from 'd3-delaunay';
+import * as turf from '@turf/turf';
 import { Station } from '../hooks/useDelhiAQI';
 import { DELHI_BOUNDARY } from '../data/delhi-outline';
 import { LocationResult } from '../types';
-import { calculateCigarettes, getPm25TierColor } from '../lib/cigarettes';
+import { calculateCigarettes, getPm25TierColor, formatCigCount } from '../lib/cigarettes';
 import { haversineDistance, findNearestStation } from '../lib/haversine';
 
 interface HeatmapProps {
@@ -21,6 +22,9 @@ const NCR_CENTER: [number, number] = [77.20, 28.60];
 const INITIAL_ZOOM = 9.2;
 const VORONOI_BOUNDS: [number, number, number, number] = [76.75, 28.25, 77.55, 28.95];
 const NCR_BOUNDS = { minLat: 28.25, maxLat: 28.95, minLng: 76.75, maxLng: 77.55 };
+
+// Circular clip region — 35 km radius, computed once at module load
+const NCR_CIRCLE = turf.buffer(turf.point([77.20, 28.55]), 35, { units: 'kilometers' })!;
 
 const DELHI_GEOJSON_URLS = [
   'https://raw.githubusercontent.com/datameet/maps/master/States/Delhi/delhi.geojson',
@@ -77,10 +81,17 @@ function buildVoronoiGeoJSON(stations: Station[]) {
   stations.forEach((station, i) => {
     const ring = voronoi.cellPolygon(i);
     if (!ring || ring.length < 3) return;
+    const coords = (ring as [number, number][]).map((p): [number, number] => [p[0], p[1]]);
+    const cellPoly = turf.polygon([coords]);
+    let clipped: ReturnType<typeof turf.intersect> | null = null;
+    try {
+      clipped = turf.intersect(turf.featureCollection([cellPoly, NCR_CIRCLE as never]));
+    } catch { clipped = null; }
+    if (!clipped) return;
     features.push({
       type: 'Feature',
       id: i,
-      geometry: { type: 'Polygon', coordinates: [ring.map(p => [p[0], p[1]])] },
+      geometry: clipped.geometry,
       properties: {
         stationId: station.id,
         stationCity: station.city ?? '',
@@ -105,7 +116,7 @@ function buildStationsGeoJSON(stations: Station[], minutesOutside: number) {
         properties: {
           stationId: station.id,
           shortName: short,
-          cigarettesLabel: `${cigs.toFixed(1)} cigs`,
+          cigarettesLabel: `${formatCigCount(cigs)} cigs`,
           showLabel: MAJOR_STATION_NAMES.some(n => short.includes(n)),
         },
       };
@@ -246,6 +257,23 @@ export function Heatmap({
         },
       });
 
+      // ── NCR circle boundary — soft edge showing clip region ────────────
+      map.addSource('ncr-region', {
+        type: 'geojson',
+        data: NCR_CIRCLE as never,
+      });
+
+      map.addLayer({
+        id: 'ncr-boundary',
+        type: 'line',
+        source: 'ncr-region',
+        paint: {
+          'line-color': 'rgba(255,255,255,0.15)',
+          'line-width': 1,
+          'line-blur': 2,
+        },
+      });
+
       // ── Delhi boundary — fallback polygon, upgrade via fetch ────────────
       map.addSource('delhi-boundary', {
         type: 'geojson',
@@ -260,9 +288,9 @@ export function Heatmap({
         type: 'line',
         source: 'delhi-boundary',
         paint: {
-          'line-color': 'rgba(255,255,255,0.6)',
-          'line-width': 2,
-          'line-dasharray': [2, 2],
+          'line-color': 'rgba(255,255,255,0.7)',
+          'line-width': 1.5,
+          'line-dasharray': [3, 3],
         },
       });
 
@@ -343,7 +371,7 @@ export function Heatmap({
           .setHTML(
             `<div style="background:#111827;color:white;padding:12px 14px;border-radius:10px;font-family:system-ui,sans-serif;min-width:180px">` +
             `<div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.6);margin-bottom:4px">${displayName}</div>` +
-            `<div style="font-size:30px;font-weight:700;line-height:1;color:${tierColor}">${cigs.toFixed(1)}</div>` +
+            `<div style="font-size:30px;font-weight:700;line-height:1;color:${tierColor}">${formatCigCount(cigs)}</div>` +
             `<div style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:2px">cigarettes · PM2.5 ${station.pm25} µg/m³</div>` +
             `</div>`
           )

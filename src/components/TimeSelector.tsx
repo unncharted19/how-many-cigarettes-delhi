@@ -4,10 +4,10 @@ interface TimeSelectorProps {
 }
 
 const timeOptions = [
-  { label: '3h',  minutes: 180  },
-  { label: '6h',  minutes: 360  },
-  { label: '12h', minutes: 720  },
-  { label: '24h', minutes: 1440 },
+  { label: '1 day',   minutes: 1440   },
+  { label: '1 week',  minutes: 10080  },
+  { label: '1 month', minutes: 43200  },
+  { label: '1 year',  minutes: 525600 },
 ];
 
 export function TimeSelector({ minutes, onChange }: TimeSelectorProps) {

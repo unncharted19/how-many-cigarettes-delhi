@@ -48,9 +48,17 @@ export function getPm25TierColor(pm25: number): string {
   return getPm25Tier(pm25).color;
 }
 
+export function formatCigCount(n: number): string {
+  if (n < 10) return n.toFixed(1);
+  return Math.round(n).toLocaleString();
+}
+
 export function formatDuration(minutes: number): string {
   if (minutes < 60) return `${minutes} min`;
-  if (minutes === 1440) return 'a full day';
+  if (minutes === 1440) return 'a day';
+  if (minutes === 10080) return 'a week';
+  if (minutes === 43200) return 'a month';
+  if (minutes === 525600) return 'a year';
   const hours = minutes / 60;
   return `${hours} hour${hours !== 1 ? 's' : ''}`;
 }
