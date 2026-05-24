@@ -1,6 +1,6 @@
 import { useRef, useState, useId, useEffect, useMemo } from 'react';
 import { Download, Share2 } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { domToPng } from 'modern-screenshot';
 import QRCode from 'qrcode';
 import { Station } from '../hooks/useDelhiAQI';
 import {
@@ -118,7 +118,7 @@ function QrBlock({ qrDataUrl, size, exp }: { qrDataUrl: string; size: number; ex
   if (!qrDataUrl) return null;
   return (
     <div style={{ textAlign: 'right', flexShrink: 0 }}>
-      <img src={qrDataUrl} alt="" style={{ width: size, height: size, display: 'block', marginLeft: 'auto' }} />
+      <img src={qrDataUrl} alt="" crossOrigin="anonymous" style={{ width: size, height: size, display: 'block', marginLeft: 'auto' }} />
       <div style={{
         fontSize: exp ? 20 : 9,
         color: 'rgba(255,255,255,0.55)',
@@ -374,7 +374,16 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
 
   const generatePng = async (): Promise<string | null> => {
     if (!exportRef.current) return null;
-    return toPng(exportRef.current, { pixelRatio: 1, cacheBust: true, width: 1080, height: 1920 });
+    await document.fonts.ready;
+    await new Promise<void>(r => requestAnimationFrame(() => r()));
+    return domToPng(exportRef.current, {
+      scale: 2,
+      width: 1080,
+      height: 1920,
+      backgroundColor: '#0a0a0a',
+      features: { removeControlCharacter: false },
+      font: { loadingTimeout: 5000 },
+    });
   };
 
   const handleSave = async () => {
@@ -444,7 +453,7 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
             className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
           >
             <Download size={16} />
-            Download
+            {generating ? 'Generating…' : 'Download'}
           </button>
           <button
             onClick={handleShare}
@@ -469,6 +478,7 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
           background: gradient,
           borderRadius: 0,
           overflow: 'hidden',
+          pointerEvents: 'none',
         }}
         aria-hidden
       >
