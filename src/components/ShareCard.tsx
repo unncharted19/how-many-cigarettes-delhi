@@ -112,6 +112,13 @@ function BreakdownLadder({ pm25, minutesOutside, tierColor, scale = 1 }: {
   );
 }
 
+// ── iOS detection ──────────────────────────────────────────────────────────────
+
+function isIOS(): boolean {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) &&
+    !(window as unknown as { MSStream?: unknown }).MSStream;
+}
+
 // ── QR Block ───────────────────────────────────────────────────────────────────
 
 function QrBlock({ qrDataUrl, size, exp }: { qrDataUrl: string; size: number; exp?: boolean }) {
@@ -130,7 +137,7 @@ function QrBlock({ qrDataUrl, size, exp }: { qrDataUrl: string; size: number; ex
         Scan to check yours
       </div>
       <div style={{ fontSize: exp ? 18 : 8, color: 'rgba(255,255,255,0.35)', marginTop: exp ? 4 : 1, fontFamily: 'system-ui, sans-serif' }}>
-        howmanycigarettes.in
+     
       </div>
     </div>
   );
@@ -150,6 +157,106 @@ function Grain({ id }: { id: string }) {
       </filter>
       <rect width="100%" height="100%" filter={`url(#${id})`} />
     </svg>
+  );
+}
+
+// ── Export Card (1080×1350, all inline styles) ─────────────────────────────────
+
+interface ExportCardInnerProps {
+  location: string;
+  distance?: number;
+  station: Station | null;
+  cigarettes: number;
+  tierColor: string;
+  pm25: number;
+  pm25Label: string;
+  pm25Color: string;
+  minutesOutside: number;
+  grainId: string;
+  qrDataUrl: string;
+  gradient: string;
+}
+
+function ExportCardInner({
+  location, distance, station, cigarettes, tierColor,
+  pm25, pm25Label, pm25Color, minutesOutside, grainId, qrDataUrl, gradient,
+}: ExportCardInnerProps) {
+  const cleanLocation = location.replace(/, Delhi$/i, '');
+  const stationLabel = station?.name
+    .replace(/,\s*Delhi/i, '')
+    .replace(/\s*-\s*(DPCC|CPCB|IITM)/i, '')
+    .trim() ?? 'station';
+  const cigCount = Math.round(cigarettes);
+  const font = 'system-ui, -apple-system, sans-serif';
+
+  return (
+    <div style={{ position: 'relative', width: '1080px', height: '1350px', background: gradient, overflow: 'hidden' }}>
+      <Grain id={grainId} />
+      <div style={{
+        position: 'relative', zIndex: 1,
+        display: 'flex', flexDirection: 'column',
+        height: '100%',
+        padding: '80px 96px 72px',
+        boxSizing: 'border-box',
+        fontFamily: font,
+      }}>
+        {/* Header */}
+        <div style={{ fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 48, whiteSpace: 'nowrap' }}>
+          Your Air · Delhi NCR
+        </div>
+
+        {/* Hero number */}
+        <div style={{ fontSize: 200, fontWeight: 700, lineHeight: 0.88, color: tierColor, marginBottom: 20 }}>
+          {formatCigCount(cigarettes)}
+        </div>
+
+        {/* "cigarettes" */}
+        <div style={{ fontSize: 56, fontWeight: 400, color: 'rgba(255,255,255,0.88)', marginBottom: 16 }}>
+          cigarettes
+        </div>
+
+        {/* Duration line */}
+        <div style={{ fontSize: 36, color: 'rgba(255,255,255,0.62)', lineHeight: 1.4, marginBottom: 8 }}>
+          in {formatDuration(minutesOutside)} of breathing the air in{' '}
+          <span style={{ color: 'rgba(255,255,255,0.92)', fontWeight: 600 }}>{cleanLocation}</span>
+        </div>
+
+        {/* Distance / monitor line */}
+        <div style={{ fontSize: 22, color: 'rgba(255,255,255,0.38)', marginBottom: 12, whiteSpace: 'nowrap' }}>
+          {distance !== undefined ? `${distance.toFixed(1)} km from ${stationLabel}` : 'CPCB monitor'}
+        </div>
+
+        {/* Cigarette grid */}
+        <div style={{ overflow: 'hidden', maxHeight: 200 }}>
+          <CigaretteGrid count={cigCount} scale={2} />
+        </div>
+
+        {/* Breakdown ladder */}
+        <BreakdownLadder pm25={pm25} minutesOutside={minutesOutside} tierColor={tierColor} scale={2} />
+
+        <div style={{ flex: 1 }} />
+
+        {/* Footer */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          paddingTop: 36,
+        }}>
+          <div>
+            <div style={{ fontSize: 28, fontWeight: 600, marginBottom: 4 }}>
+              <span style={{ color: pm25Color }}>{pm25Label}</span>
+              <span style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 14, fontWeight: 400, fontSize: 24 }}>
+                PM2.5 {pm25} µg/m³
+              </span>
+            </div>
+            <div style={{ fontSize: 20, color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap' }}>
+              howmanycigarettes.in
+            </div>
+          </div>
+          <QrBlock qrDataUrl={qrDataUrl} size={140} exp />
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -377,10 +484,10 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
     await document.fonts.ready;
     await new Promise<void>(r => requestAnimationFrame(() => r()));
     return domToPng(exportRef.current, {
-      scale: 2,
+      scale: 1,
       width: 1080,
-      height: 1920,
-      backgroundColor: '#0a0a0a',
+      height: 1350,
+      backgroundColor: '#1a0a0a',
       features: { removeControlCharacter: false },
       font: { loadingTimeout: 5000 },
     });
@@ -391,12 +498,30 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
     try {
       const dataUrl = await generatePng();
       if (!dataUrl) return;
+      const filename = `delhi-air-${cleanLocation.replace(/\s+/g, '-').toLowerCase()}.png`;
+
+      if (isIOS()) {
+        const blob = await (await fetch(dataUrl)).blob();
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare?.({ files: [file] })) {
+          try {
+            await navigator.share({ files: [file], title: 'Delhi Air Quality' });
+            return;
+          } catch (e) {
+            if ((e as Error).name === 'AbortError') return;
+          }
+        }
+      }
+
       const link = document.createElement('a');
-      link.download = `delhi-air-${cleanLocation.replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.download = filename;
       link.href = dataUrl;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (err) {
       console.error('Failed to save image:', err);
+      alert('Could not save image. Try the Share button instead.');
     } finally {
       setGenerating(false);
     }
@@ -466,23 +591,26 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
         </div>
       </div>
 
-      {/* ── Offscreen 9:16 export card (1080×1920) ───────────────────────── */}
+      {/* ── Offscreen 4:5 export card (1080×1350) ────────────────────────── */}
       <div
         ref={exportRef}
-        style={{
-          position: 'fixed',
-          left: '-9999px',
-          top: 0,
-          width: '1080px',
-          height: '1920px',
-          background: gradient,
-          borderRadius: 0,
-          overflow: 'hidden',
-          pointerEvents: 'none',
-        }}
+        style={{ position: 'fixed', left: '-9999px', top: 0, pointerEvents: 'none' }}
         aria-hidden
       >
-        <CardContent {...sharedProps} heroSize={240} grainId={exportGrainId} isExport />
+        <ExportCardInner
+          location={location}
+          distance={distance}
+          station={station}
+          cigarettes={cigarettes}
+          tierColor={cigaretteTier.color}
+          pm25={pm25}
+          pm25Label={pm25Tier.label}
+          pm25Color={pm25Tier.color}
+          minutesOutside={minutesOutside}
+          grainId={exportGrainId}
+          qrDataUrl={qrDataUrl}
+          gradient={gradient}
+        />
       </div>
 
       {shareModalOpen && (
