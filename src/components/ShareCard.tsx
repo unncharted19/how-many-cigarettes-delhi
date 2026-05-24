@@ -102,6 +102,7 @@ function BreakdownLadder({ pm25, minutesOutside, tierColor, scale = 1 }: {
               color: 'white',
               fontFamily: 'system-ui, sans-serif',
               fontVariantNumeric: 'tabular-nums',
+              whiteSpace: 'nowrap',
             }}>
               {label} · {formatCigCount(cigs)} cigs
             </span>
@@ -243,14 +244,11 @@ function ExportCardInner({
           paddingTop: 36,
         }}>
           <div>
-            <div style={{ fontSize: 28, fontWeight: 600, marginBottom: 4 }}>
+            <div style={{ fontSize: 28, fontWeight: 600, whiteSpace: 'nowrap' }}>
               <span style={{ color: pm25Color }}>{pm25Label}</span>
               <span style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 14, fontWeight: 400, fontSize: 24 }}>
                 PM2.5 {pm25} µg/m³
               </span>
-            </div>
-            <div style={{ fontSize: 20, color: 'rgba(255,255,255,0.3)', whiteSpace: 'nowrap' }}>
-              howmanycigarettes.in
             </div>
           </div>
           <QrBlock qrDataUrl={qrDataUrl} size={140} exp />
@@ -295,7 +293,7 @@ function CardContent({
       <div style={{ fontSize: exp ? 22 : 10, color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>
         {distance !== undefined ? `${distance.toFixed(1)} km from ${stationLabel}` : 'CPCB monitor'}
       </div>
-      <div style={{ fontSize: exp ? 28 : 13, fontWeight: 600 }}>
+      <div style={{ fontSize: exp ? 28 : 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
         <span style={{ color: pm25Color }}>{pm25Label}</span>
         <span style={{ color: 'rgba(255,255,255,0.45)', marginLeft: exp ? 12 : 8, fontWeight: 400, fontSize: exp ? 24 : 11 }}>
           PM2.5 {pm25} µg/m³
@@ -386,10 +384,12 @@ function CardContent({
           </div>
         )}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10, marginTop: 2 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: pm25Color }}>{pm25Label}</span>
-          <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>
-            PM2.5 {pm25} µg/m³
-          </span>
+          <div style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, color: pm25Color }}>{pm25Label}</span>
+            <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>
+              PM2.5 {pm25} µg/m³
+            </span>
+          </div>
         </div>
       </div>
 

@@ -13,7 +13,7 @@ interface ShareModalProps {
 
 export function ShareModal({ cigarettes, location, pm25, minutesOutside, onClose, onDownload }: ShareModalProps) {
   const cleanLocation = location.replace(/, Delhi$/i, '');
-  const shareUrl = typeof window !== 'undefined' ? window.location.origin : 'https://howmanycigarettes.in';
+  const shareUrl = typeof window !== 'undefined' ? window.location.origin : '';
   const durationLabel = formatDuration(minutesOutside);
   const shareText = `I "smoke" ${formatCigCount(cigarettes)} cigarettes ${durationLabel === 'a year' ? 'a year' : `in ${durationLabel}`} just by breathing the air in ${cleanLocation}. Delhi NCR PM2.5: ${pm25} µg/m³. Check yours →`;
 
