@@ -26,11 +26,7 @@ const NCR_BOUNDS = { minLat: 28.25, maxLat: 28.95, minLng: 76.75, maxLng: 77.55 
 // Circular clip region — 35 km radius, computed once at module load
 const NCR_CIRCLE = turf.buffer(turf.point([77.20, 28.55]), 35, { units: 'kilometers' })!;
 
-const DELHI_GEOJSON_URLS = [
-  'https://raw.githubusercontent.com/datameet/maps/master/States/Delhi/delhi.geojson',
-  'https://raw.githubusercontent.com/india-geo/india-geojson/main/states/delhi.geojson',
-  'https://raw.githubusercontent.com/Project-OSRM/osrm-backend/master/test/data/india/delhi.geojson',
-];
+const DELHI_GEOJSON_URLS = ['/delhi.geojson'];
 
 const MAJOR_STATION_NAMES = [
   'Anand Vihar', 'ITO', 'Dwarka', 'Rohini', 'Lodhi',
