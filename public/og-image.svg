@@ -1,0 +1,161 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2d0a0a"/>
+      <stop offset="100%" stop-color="#0c0a09"/>
+    </linearGradient>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <!-- Film grain -->
+  <rect width="1200" height="630" filter="url(#grain)" opacity="0.04"/>
+
+  <!-- Left accent bar -->
+  <rect x="72" y="80" width="4" height="470" fill="#dc2626" opacity="0.6" rx="2"/>
+
+  <!-- Eyebrow -->
+  <text x="96" y="118" font-family="Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="600" letter-spacing="0.14em" fill="rgba(255,255,255,0.45)" text-transform="uppercase">YOUR AIR · DELHI NCR · LIVE CPCB DATA</text>
+
+  <!-- Hero number -->
+  <text x="96" y="290" font-family="Helvetica Neue, Arial, sans-serif" font-size="220" font-weight="700" fill="#ef4444" line-height="1">12</text>
+
+  <!-- cigarettes label -->
+  <text x="106" y="358" font-family="Helvetica Neue, Arial, sans-serif" font-size="52" font-weight="400" fill="rgba(255,255,255,0.88)">cigarettes</text>
+
+  <!-- Subline -->
+  <text x="106" y="412" font-family="Helvetica Neue, Arial, sans-serif" font-size="30" fill="rgba(255,255,255,0.55)">in a month of breathing the air in</text>
+  <text x="106" y="452" font-family="Helvetica Neue, Arial, sans-serif" font-size="30" font-weight="600" fill="rgba(255,255,255,0.9)">Delhi NCR</text>
+
+  <!-- Cigarette icons row -->
+  <g opacity="0.65" transform="translate(700, 160)">
+    <!-- 30 cigarettes in a 6×5 grid -->
+    <g id="cig">
+      <rect x="0" y="0" width="2" height="8" fill="#ff6650"/>
+      <rect x="2" y="0" width="18" height="8" fill="rgba(255,255,255,0.75)"/>
+      <rect x="20" y="0" width="6" height="8" fill="rgba(255,255,255,0.4)"/>
+    </g>
+    <!-- Row 1 -->
+    <use href="#cig" transform="translate(0,0)"/>
+    <use href="#cig" transform="translate(36,0)"/>
+    <use href="#cig" transform="translate(72,0)"/>
+    <use href="#cig" transform="translate(108,0)"/>
+    <use href="#cig" transform="translate(144,0)"/>
+    <use href="#cig" transform="translate(180,0)"/>
+    <use href="#cig" transform="translate(216,0)"/>
+    <use href="#cig" transform="translate(252,0)"/>
+    <!-- Row 2 -->
+    <use href="#cig" transform="translate(0,20)"/>
+    <use href="#cig" transform="translate(36,20)"/>
+    <use href="#cig" transform="translate(72,20)"/>
+    <use href="#cig" transform="translate(108,20)"/>
+    <use href="#cig" transform="translate(144,20)"/>
+    <use href="#cig" transform="translate(180,20)"/>
+    <use href="#cig" transform="translate(216,20)"/>
+    <use href="#cig" transform="translate(252,20)"/>
+    <!-- Row 3 -->
+    <use href="#cig" transform="translate(0,40)"/>
+    <use href="#cig" transform="translate(36,40)"/>
+    <use href="#cig" transform="translate(72,40)"/>
+    <use href="#cig" transform="translate(108,40)"/>
+    <use href="#cig" transform="translate(144,40)"/>
+    <use href="#cig" transform="translate(180,40)"/>
+    <use href="#cig" transform="translate(216,40)"/>
+    <use href="#cig" transform="translate(252,40)"/>
+    <!-- Row 4 -->
+    <use href="#cig" transform="translate(0,60)"/>
+    <use href="#cig" transform="translate(36,60)"/>
+    <use href="#cig" transform="translate(72,60)"/>
+    <use href="#cig" transform="translate(108,60)"/>
+    <use href="#cig" transform="translate(144,60)"/>
+    <use href="#cig" transform="translate(180,60)"/>
+    <use href="#cig" transform="translate(216,60)"/>
+    <use href="#cig" transform="translate(252,60)"/>
+    <!-- Row 5 -->
+    <use href="#cig" transform="translate(0,80)"/>
+    <use href="#cig" transform="translate(36,80)"/>
+    <use href="#cig" transform="translate(72,80)"/>
+    <use href="#cig" transform="translate(108,80)"/>
+    <use href="#cig" transform="translate(144,80)"/>
+    <use href="#cig" transform="translate(180,80)"/>
+    <use href="#cig" transform="translate(216,80)"/>
+    <use href="#cig" transform="translate(252,80)"/>
+    <!-- Row 6 -->
+    <use href="#cig" transform="translate(0,100)"/>
+    <use href="#cig" transform="translate(36,100)"/>
+    <use href="#cig" transform="translate(72,100)"/>
+    <use href="#cig" transform="translate(108,100)"/>
+    <use href="#cig" transform="translate(144,100)"/>
+    <use href="#cig" transform="translate(180,100)"/>
+    <use href="#cig" transform="translate(216,100)"/>
+    <use href="#cig" transform="translate(252,100)"/>
+    <!-- Row 7 -->
+    <use href="#cig" transform="translate(0,120)"/>
+    <use href="#cig" transform="translate(36,120)"/>
+    <use href="#cig" transform="translate(72,120)"/>
+    <use href="#cig" transform="translate(108,120)"/>
+    <use href="#cig" transform="translate(144,120)"/>
+    <use href="#cig" transform="translate(180,120)"/>
+    <use href="#cig" transform="translate(216,120)"/>
+    <use href="#cig" transform="translate(252,120)"/>
+    <!-- Row 8 -->
+    <use href="#cig" transform="translate(0,140)"/>
+    <use href="#cig" transform="translate(36,140)"/>
+    <use href="#cig" transform="translate(72,140)"/>
+    <use href="#cig" transform="translate(108,140)"/>
+    <use href="#cig" transform="translate(144,140)"/>
+    <use href="#cig" transform="translate(180,140)"/>
+    <use href="#cig" transform="translate(216,140)"/>
+    <use href="#cig" transform="translate(252,140)"/>
+    <!-- Row 9 -->
+    <use href="#cig" transform="translate(0,160)"/>
+    <use href="#cig" transform="translate(36,160)"/>
+    <use href="#cig" transform="translate(72,160)"/>
+    <use href="#cig" transform="translate(108,160)"/>
+    <use href="#cig" transform="translate(144,160)"/>
+    <use href="#cig" transform="translate(180,160)"/>
+    <use href="#cig" transform="translate(216,160)"/>
+    <use href="#cig" transform="translate(252,160)"/>
+    <!-- Row 10 -->
+    <use href="#cig" transform="translate(0,180)"/>
+    <use href="#cig" transform="translate(36,180)"/>
+    <use href="#cig" transform="translate(72,180)"/>
+    <use href="#cig" transform="translate(108,180)"/>
+    <use href="#cig" transform="translate(144,180)"/>
+    <use href="#cig" transform="translate(180,180)"/>
+    <use href="#cig" transform="translate(216,180)"/>
+    <use href="#cig" transform="translate(252,180)"/>
+    <!-- Row 11 -->
+    <use href="#cig" transform="translate(0,200)"/>
+    <use href="#cig" transform="translate(36,200)"/>
+    <use href="#cig" transform="translate(72,200)"/>
+    <use href="#cig" transform="translate(108,200)"/>
+    <use href="#cig" transform="translate(144,200)"/>
+    <use href="#cig" transform="translate(180,200)"/>
+    <use href="#cig" transform="translate(216,200)"/>
+    <use href="#cig" transform="translate(252,200)"/>
+    <!-- Row 12 -->
+    <use href="#cig" transform="translate(0,220)"/>
+    <use href="#cig" transform="translate(36,220)"/>
+    <use href="#cig" transform="translate(72,220)"/>
+    <use href="#cig" transform="translate(108,220)"/>
+    <use href="#cig" transform="translate(144,220)"/>
+    <use href="#cig" transform="translate(180,220)"/>
+    <use href="#cig" transform="translate(216,220)"/>
+    <use href="#cig" transform="translate(252,220)"/>
+  </g>
+
+  <!-- Divider -->
+  <line x1="72" y1="510" x2="1128" y2="510" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+
+  <!-- Footer left: PM2.5 badge -->
+  <text x="96" y="558" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" font-weight="600" fill="#ef4444">Very Poor</text>
+  <text x="220" y="558" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.38)">  PM2.5 · Delhi NCR avg</text>
+
+  <!-- Footer right: CTA -->
+  <text x="1128" y="558" font-family="Helvetica Neue, Arial, sans-serif" font-size="22" fill="rgba(255,255,255,0.55)" text-anchor="end">Check yours →</text>
+</svg>
