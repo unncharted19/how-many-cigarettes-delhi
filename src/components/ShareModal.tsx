@@ -73,12 +73,12 @@ export function ShareModal({ cigarettes, location, pm25, minutesOutside, onClose
           {formatCigCount(cigarettes)} cigarettes in {durationLabel} · {cleanLocation}
         </p>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
           {buttons.map(btn => (
             <button
               key={btn.label}
               onClick={btn.onClick}
-              className="flex items-center gap-2 px-4 py-3 rounded-xl text-white text-sm font-medium transition-opacity hover:opacity-90 active:opacity-75"
+              className="flex items-center gap-2 px-4 py-3 min-h-[44px] rounded-xl text-white text-sm font-medium transition-opacity hover:opacity-90 active:opacity-75"
               style={{ background: btn.color }}
             >
               {btn.icon}

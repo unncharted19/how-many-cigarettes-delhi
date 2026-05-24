@@ -36,11 +36,11 @@ export function WorstZones({ stations, minutesOutside, onStationClick }: WorstZo
               onClick={() => onStationClick(station)}
               className="w-full flex items-center justify-between p-3 bg-gray-900 border border-gray-800 rounded-lg hover:bg-gray-800 transition-colors text-left"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-gray-500 font-semibold text-sm w-5">{index + 1}</span>
-                <div>
-                  <p className="text-white font-medium">{cleanStationName(station.name)}</p>
-                  <p className="text-gray-400 text-sm">{station.city ? `${station.city} · ` : ''}{station.pm25} µg/m³</p>
+              <div className="flex items-center gap-3 min-w-0">
+                <span className="text-gray-500 font-semibold text-sm w-5 shrink-0">{index + 1}</span>
+                <div className="min-w-0">
+                  <p className="text-white font-medium truncate">{cleanStationName(station.name)}</p>
+                  <p className="text-gray-400 text-sm truncate">{station.city ? `${station.city} · ` : ''}{station.pm25} µg/m³</p>
                 </div>
               </div>
               <div className="text-right">

@@ -96,7 +96,7 @@ function CardContent({
 
         {/* Hero number */}
         <div style={{
-          fontSize: heroSize,
+          fontSize: isExport ? heroSize : 'clamp(52px, 14vw, 140px)',
           fontWeight: 700,
           lineHeight: 0.88,
           color: tierColor,
@@ -254,7 +254,7 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
         <CardContent {...sharedProps} heroSize={140} grainId={inlineGrainId} />
       </div>
 
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-3">
         <p className="text-gray-600 text-xs">
           Formula: (PM2.5 / 22) × (days) × 1.5
         </p>
@@ -262,7 +262,7 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
           <button
             onClick={handleSave}
             disabled={generating}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
           >
             <Download size={16} />
             Download
@@ -270,7 +270,7 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
           <button
             onClick={handleShare}
             disabled={generating}
-            className="flex items-center gap-2 px-4 py-2 bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 min-h-[44px] bg-white text-black font-semibold rounded-lg hover:bg-gray-200 transition-colors text-sm disabled:opacity-50"
           >
             <Share2 size={16} />
             {generating ? 'Generating…' : 'Share'}

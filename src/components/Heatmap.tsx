@@ -486,15 +486,15 @@ export function Heatmap({
       <div ref={containerRef} className="w-full h-full" />
 
       {showGeoBanner && (
-        <div className="absolute top-3 left-3 right-14 z-10 flex items-center gap-3 px-4 py-3 bg-black/75 backdrop-blur-sm rounded-xl text-sm">
-          <span className="text-gray-200 text-xs leading-snug">
+        <div className="absolute top-3 left-3 right-3 sm:right-14 z-10 flex flex-wrap items-center gap-2 px-3 py-2.5 bg-black/75 backdrop-blur-sm rounded-xl text-sm">
+          <span className="text-gray-200 text-xs leading-snug flex-1 min-w-[130px]">
             📍 Get your personal report — allow location or search below
           </span>
           <div className="flex gap-2 shrink-0">
-            <button onClick={handleGeoClick} className="px-3 py-1.5 bg-blue-500 hover:bg-blue-400 text-white rounded-lg text-xs font-semibold transition-colors">
+            <button onClick={handleGeoClick} className="px-3 py-1.5 min-h-[32px] bg-blue-500 hover:bg-blue-400 text-white rounded-lg text-xs font-semibold transition-colors">
               Use my location
             </button>
-            <button onClick={handleGeoDismiss} className="px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-xs transition-colors">
+            <button onClick={handleGeoDismiss} className="px-3 py-1.5 min-h-[32px] bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-xs transition-colors">
               Dismiss
             </button>
           </div>

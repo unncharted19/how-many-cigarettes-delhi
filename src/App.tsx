@@ -46,12 +46,12 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-white overflow-x-hidden">
       <div className="max-w-6xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
           <div className="flex items-center gap-3">
-            <Cigarette size={32} className="text-red-500" />
-            <h1 className="text-2xl font-bold">How Many Cigarettes? <span className="text-gray-500 font-normal text-lg">· Delhi NCR · Live CPCB data</span></h1>
+            <Cigarette size={28} className="text-red-500 shrink-0 sm:w-8 sm:h-8" />
+            <h1 className="text-xl sm:text-2xl font-bold">How Many Cigarettes? <span className="hidden sm:inline text-gray-500 font-normal text-lg">· Delhi NCR · Live CPCB data</span></h1>
           </div>
           <TimeSelector minutes={minutesOutside} onChange={setMinutesOutside} />
         </div>
@@ -71,13 +71,13 @@ function App() {
         )}
 
         {loading ? (
-          <div className="rounded-2xl mb-6 flex items-center justify-center h-[350px] md:h-[600px]" style={{ background: '#0a0a0a' }}>
+          <div className="rounded-2xl mb-6 flex items-center justify-center h-[350px] md:h-[550px]" style={{ background: '#0a0a0a' }}>
             <div className="text-gray-400">Loading air quality data...</div>
           </div>
         ) : (
           <>
             <div className="rounded-2xl overflow-hidden mb-6" style={{ background: '#0a0a0a' }}>
-              <div className="h-[350px] md:h-[600px]">
+              <div className="h-[350px] md:h-[550px]">
                 <Heatmap
                   stations={stations}
                   minutesOutside={minutesOutside}
