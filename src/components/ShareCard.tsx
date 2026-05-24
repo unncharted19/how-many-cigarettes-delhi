@@ -1,13 +1,16 @@
-import { useRef, useState, useId } from 'react';
-import { Download, Share2, Cigarette } from 'lucide-react';
+import { useRef, useState, useId, useEffect, useMemo } from 'react';
+import { Download, Share2 } from 'lucide-react';
 import { toPng } from 'html-to-image';
+import QRCode from 'qrcode';
 import { Station } from '../hooks/useDelhiAQI';
-import { calculateCigarettes, getCigaretteTier, getPm25Tier, formatDuration, formatCigCount } from '../lib/cigarettes';
+import {
+  calculateCigarettes, getCigaretteTier, getPm25Tier,
+  formatDuration, formatCigCount,
+} from '../lib/cigarettes';
 import { ShareModal } from './ShareModal';
 
 interface ShareCardProps {
   location: string;
-  pincode?: string;
   distance?: number;
   station: Station | null;
   minutesOutside: number;
@@ -21,6 +24,136 @@ function getCardGradient(tierLabel: string): string {
   return 'linear-gradient(135deg, #450a0a 0%, #0c0a09 100%)';
 }
 
+// ── Cigarette Grid ─────────────────────────────────────────────────────────────
+
+function CigaretteGrid({ count, scale = 1 }: { count: number; scale?: number }) {
+  const capped = Math.min(Math.max(Math.round(count), 0), 5000);
+  const overflow = Math.round(count) > 5000 ? Math.round(count) - 5000 : 0;
+
+  let w: number, h: number, gap: number;
+  if      (capped < 50)   { w = 24;  h = 5;   gap = 7;   }
+  else if (capped < 200)  { w = 16;  h = 4;   gap = 5;   }
+  else if (capped < 500)  { w = 10;  h = 3;   gap = 3;   }
+  else if (capped < 1500) { w = 7;   h = 2;   gap = 2;   }
+  else                    { w = 4;   h = 1.5; gap = 1.5; }
+
+  w *= scale; h *= scale; gap *= scale;
+
+  const icons = useMemo(() => Array.from({ length: capped }), [capped]);
+
+  return (
+    <div style={{ width: '100%', padding: scale > 1 ? 20 : 8, boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: gap, opacity: 0.75 }}>
+        {icons.map((_, i) => (
+          <svg key={i} width={w} height={h} viewBox="0 0 12 3" style={{ display: 'block', flexShrink: 0 }}>
+            <rect x="0" y="0" width="2" height="3" fill="#ff6650" />
+            <rect x="2" y="0" width="7" height="3" fill="rgba(255,255,255,0.75)" />
+            <rect x="9" y="0" width="3" height="3" fill="rgba(255,255,255,0.45)" />
+          </svg>
+        ))}
+      </div>
+      {overflow > 0 && (
+        <div style={{
+          marginTop: scale > 1 ? 16 : 6,
+          fontSize: scale > 1 ? 22 : 10,
+          color: 'rgba(255,255,255,0.5)',
+          fontFamily: 'system-ui, sans-serif',
+        }}>
+          + {overflow.toLocaleString()} more
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Breakdown Ladder ───────────────────────────────────────────────────────────
+
+const LADDER_ROWS = [
+  { label: 'Per day',   minutes: 1440   },
+  { label: 'Per week',  minutes: 10080  },
+  { label: 'Per month', minutes: 43200  },
+  { label: 'Per year',  minutes: 525600 },
+];
+
+function BreakdownLadder({ pm25, minutesOutside, tierColor, scale = 1 }: {
+  pm25: number;
+  minutesOutside: number;
+  tierColor: string;
+  scale?: number;
+}) {
+  const exp = scale > 1;
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: exp ? 14 : 3, marginTop: exp ? 36 : 10 }}>
+      {LADDER_ROWS.map(({ label, minutes }) => {
+        const cigs = calculateCigarettes(pm25, minutes);
+        const sel = minutesOutside === minutes;
+        return (
+          <div key={minutes} style={{
+            display: 'flex',
+            alignItems: 'center',
+            borderLeft: `${exp ? 6 : 3}px solid ${sel ? tierColor : 'transparent'}`,
+            paddingLeft: exp ? 18 : 7,
+            opacity: sel ? 1 : 0.38,
+          }}>
+            <span style={{
+              fontSize: exp ? (sel ? 30 : 24) : (sel ? 13 : 11),
+              fontWeight: sel ? 700 : 400,
+              color: 'white',
+              fontFamily: 'system-ui, sans-serif',
+              fontVariantNumeric: 'tabular-nums',
+            }}>
+              {label} · {formatCigCount(cigs)} cigs
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── QR Block ───────────────────────────────────────────────────────────────────
+
+function QrBlock({ qrDataUrl, size, exp }: { qrDataUrl: string; size: number; exp?: boolean }) {
+  if (!qrDataUrl) return null;
+  return (
+    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+      <img src={qrDataUrl} alt="" style={{ width: size, height: size, display: 'block', marginLeft: 'auto' }} />
+      <div style={{
+        fontSize: exp ? 20 : 9,
+        color: 'rgba(255,255,255,0.55)',
+        letterSpacing: '0.05em',
+        textTransform: 'uppercase',
+        marginTop: exp ? 8 : 3,
+        fontFamily: 'system-ui, sans-serif',
+      }}>
+        Scan to check yours
+      </div>
+      <div style={{ fontSize: exp ? 18 : 8, color: 'rgba(255,255,255,0.35)', marginTop: exp ? 4 : 1, fontFamily: 'system-ui, sans-serif' }}>
+        howmanycigarettes.in
+      </div>
+    </div>
+  );
+}
+
+// ── Film Grain ─────────────────────────────────────────────────────────────────
+
+function Grain({ id }: { id: string }) {
+  return (
+    <svg
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.045, pointerEvents: 'none' }}
+      aria-hidden
+    >
+      <filter id={id}>
+        <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
+        <feColorMatrix type="saturate" values="0" />
+      </filter>
+      <rect width="100%" height="100%" filter={`url(#${id})`} />
+    </svg>
+  );
+}
+
+// ── Card Content ───────────────────────────────────────────────────────────────
+
 interface CardContentProps {
   location: string;
   distance?: number;
@@ -33,144 +166,151 @@ interface CardContentProps {
   minutesOutside: number;
   heroSize: number;
   grainId: string;
+  qrDataUrl: string;
   isExport?: boolean;
 }
 
 function CardContent({
   location, distance, station, cigarettes, tierColor, pm25, pm25Label, pm25Color,
-  minutesOutside, heroSize, grainId, isExport,
+  minutesOutside, heroSize, grainId, qrDataUrl, isExport,
 }: CardContentProps) {
   const cleanLocation = location.replace(/, Delhi$/i, '');
   const stationLabel = station?.name
     .replace(/,\s*Delhi/i, '')
     .replace(/\s*-\s*(DPCC|CPCB|IITM)/i, '')
     .trim() ?? 'station';
+  const cigCount = Math.round(cigarettes);
+  const exp = !!isExport;
 
+  const footerInfo = (
+    <div style={{ fontFamily: 'system-ui, sans-serif' }}>
+      <div style={{ fontSize: exp ? 22 : 10, color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>
+        {distance !== undefined ? `${distance.toFixed(1)} km from ${stationLabel}` : 'CPCB monitor'}
+      </div>
+      <div style={{ fontSize: exp ? 28 : 13, fontWeight: 600 }}>
+        <span style={{ color: pm25Color }}>{pm25Label}</span>
+        <span style={{ color: 'rgba(255,255,255,0.45)', marginLeft: exp ? 12 : 8, fontWeight: 400, fontSize: exp ? 24 : 11 }}>
+          PM2.5 {pm25} µg/m³
+        </span>
+      </div>
+    </div>
+  );
+
+  const footer = (
+    <div style={{
+      display: 'flex',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      borderTop: '1px solid rgba(255,255,255,0.1)',
+      paddingTop: exp ? 40 : 10,
+      marginTop: exp ? 0 : 6,
+      flexShrink: 0,
+    }}>
+      {footerInfo}
+      {exp && <QrBlock qrDataUrl={qrDataUrl} size={140} exp />}
+    </div>
+  );
+
+  if (exp) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+        <Grain id={grainId} />
+        <div style={{
+          position: 'relative', zIndex: 1,
+          display: 'flex', flexDirection: 'column',
+          height: '100%',
+          padding: '100px 96px',
+          boxSizing: 'border-box',
+        }}>
+          <div style={{ fontSize: 22, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 60, fontFamily: 'system-ui, sans-serif' }}>
+            Your Air · Delhi NCR
+          </div>
+          <div style={{ fontSize: heroSize, fontWeight: 700, lineHeight: 0.88, color: tierColor, fontFamily: 'system-ui, sans-serif', marginBottom: 28 }}>
+            {formatCigCount(cigarettes)}
+          </div>
+          <div style={{ fontSize: 52, fontWeight: 400, color: 'rgba(255,255,255,0.88)', fontFamily: 'system-ui, sans-serif', marginBottom: 16 }}>
+            cigarettes
+          </div>
+          <div style={{ fontSize: 34, color: 'rgba(255,255,255,0.62)', fontFamily: 'system-ui, sans-serif', lineHeight: 1.4, maxWidth: 800, marginBottom: 24 }}>
+            in {formatDuration(minutesOutside)} of breathing the air in{' '}
+            <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{cleanLocation}</span>
+          </div>
+          <CigaretteGrid count={cigCount} scale={2.2} />
+          <BreakdownLadder pm25={pm25} minutesOutside={minutesOutside} tierColor={tierColor} scale={2.2} />
+          <div style={{ flex: 1 }} />
+          {footer}
+        </div>
+      </div>
+    );
+  }
+
+  // Inline 16:9 — 2-column layout
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-      {/* Film grain overlay */}
-      <svg
-        style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', opacity: 0.045, pointerEvents: 'none' }}
-        aria-hidden
-      >
-        <filter id={grainId}>
-          <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch" />
-          <feColorMatrix type="saturate" values="0" />
-        </filter>
-        <rect width="100%" height="100%" filter={`url(#${grainId})`} />
-      </svg>
-
-      {/* Faded cigarette icon watermark */}
+      <Grain id={grainId} />
       <div style={{
-        position: 'absolute',
-        top: isExport ? 80 : 16,
-        right: isExport ? 80 : 16,
-        opacity: 0.05,
-        pointerEvents: 'none',
-      }}>
-        <Cigarette size={isExport ? 320 : 160} />
-      </div>
-
-      {/* Content */}
-      <div style={{
-        position: 'relative',
-        zIndex: 1,
-        display: 'flex',
-        flexDirection: 'column',
+        position: 'relative', zIndex: 1,
+        display: 'flex', flexDirection: 'column',
         height: '100%',
-        padding: isExport ? '100px 96px' : '28px 32px',
+        padding: '22px 28px',
         boxSizing: 'border-box',
       }}>
         {/* Eyebrow */}
         <div style={{
-          fontSize: isExport ? 22 : 11,
-          fontWeight: 600,
-          color: 'rgba(255,255,255,0.55)',
-          letterSpacing: '0.12em',
-          textTransform: 'uppercase',
-          marginBottom: isExport ? 60 : 18,
-          fontFamily: 'system-ui, sans-serif',
+          fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)',
+          letterSpacing: '0.12em', textTransform: 'uppercase',
+          marginBottom: 10, fontFamily: 'system-ui, sans-serif', flexShrink: 0,
         }}>
           Your Air · Delhi NCR
         </div>
 
-        {/* Hero number */}
-        <div style={{
-          fontSize: isExport ? heroSize : 'clamp(52px, 14vw, 140px)',
-          fontWeight: 700,
-          lineHeight: 0.88,
-          color: tierColor,
-          fontFamily: 'system-ui, sans-serif',
-          marginBottom: isExport ? 28 : 8,
-        }}>
-          {formatCigCount(cigarettes)}
-        </div>
+        {/* 2-column main row */}
+        <div style={{ flex: 1, display: 'flex', gap: 16, minHeight: 0 }}>
 
-        {/* "cigarettes" label */}
-        <div style={{
-          fontSize: isExport ? 52 : 26,
-          fontWeight: 400,
-          color: 'rgba(255,255,255,0.88)',
-          fontFamily: 'system-ui, sans-serif',
-          marginBottom: isExport ? 48 : 12,
-        }}>
-          cigarettes
-        </div>
-
-        {/* Subline */}
-        <div style={{
-          fontSize: isExport ? 34 : 16,
-          color: 'rgba(255,255,255,0.62)',
-          fontFamily: 'system-ui, sans-serif',
-          lineHeight: 1.4,
-          maxWidth: isExport ? 800 : undefined,
-        }}>
-          in {formatDuration(minutesOutside)} of breathing the air in{' '}
-          <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{cleanLocation}</span>
-        </div>
-
-        {/* Spacer */}
-        <div style={{ flex: 1 }} />
-
-        {/* Footer row */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
-          paddingTop: isExport ? 40 : 14,
-        }}>
-          <div style={{ fontFamily: 'system-ui, sans-serif' }}>
-            <div style={{ fontSize: isExport ? 22 : 11, color: 'rgba(255,255,255,0.4)', marginBottom: 2 }}>
-              {distance !== undefined
-                ? `${distance.toFixed(1)} km from ${stationLabel}`
-                : 'CPCB monitor'}
+          {/* LEFT — hero, ladder */}
+          <div style={{ flex: '0 0 55%', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+            <div style={{
+              fontSize: 'clamp(52px, 14vw, 140px)',
+              fontWeight: 700, lineHeight: 0.88,
+              color: tierColor,
+              fontFamily: 'system-ui, sans-serif',
+              marginBottom: 6,
+            }}>
+              {formatCigCount(cigarettes)}
             </div>
-            <div style={{ fontSize: isExport ? 28 : 14, fontWeight: 600 }}>
-              <span style={{ color: pm25Color }}>{pm25Label}</span>
-              <span style={{ color: 'rgba(255,255,255,0.45)', marginLeft: 8, fontWeight: 400, fontSize: isExport ? 24 : 12 }}>
-                PM2.5 {pm25} µg/m³
-              </span>
+            <div style={{ fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.88)', fontFamily: 'system-ui, sans-serif', marginBottom: 6 }}>
+              cigarettes
             </div>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.62)', fontFamily: 'system-ui, sans-serif', lineHeight: 1.4 }}>
+              in {formatDuration(minutesOutside)} of breathing the air in{' '}
+              <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{cleanLocation}</span>
+            </div>
+            <BreakdownLadder pm25={pm25} minutesOutside={minutesOutside} tierColor={tierColor} />
+            <div style={{ flex: 1 }} />
           </div>
-          <div style={{
-            fontSize: isExport ? 22 : 11,
-            color: 'rgba(255,255,255,0.35)',
-            fontFamily: 'system-ui, sans-serif',
-            letterSpacing: '0.02em',
-          }}>
-            howmanycigarettes.in
+
+          {/* RIGHT — cigarette grid + QR */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 0, overflow: 'hidden' }}>
+            <div style={{ flex: 1, width: '100%', overflow: 'hidden' }}>
+              <CigaretteGrid count={cigCount} />
+            </div>
+            <QrBlock qrDataUrl={qrDataUrl} size={60} />
           </div>
         </div>
+
+        {footer}
       </div>
     </div>
   );
 }
 
+// ── ShareCard ──────────────────────────────────────────────────────────────────
+
 export function ShareCard({ location, distance, station, minutesOutside }: ShareCardProps) {
   const exportRef = useRef<HTMLDivElement>(null);
   const [shareModalOpen, setShareModalOpen] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState('');
   const inlineGrainId = useId().replace(/:/g, '');
   const exportGrainId = useId().replace(/:/g, '');
 
@@ -179,6 +319,20 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
   const cigaretteTier = getCigaretteTier(cigarettes);
   const pm25Tier = getPm25Tier(pm25);
   const gradient = getCardGradient(pm25Tier.label);
+  const cleanLocation = location.replace(/, Delhi$/i, '');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams();
+    if (cleanLocation) params.set('location', cleanLocation);
+    params.set('time', String(minutesOutside));
+    const url = `${window.location.origin}/?${params.toString()}`;
+    QRCode.toDataURL(url, {
+      width: 200,
+      margin: 1,
+      color: { dark: '#ffffff', light: '#00000000' },
+    }).then(setQrDataUrl).catch(console.error);
+  }, [cleanLocation, minutesOutside]);
 
   const sharedProps: Omit<CardContentProps, 'heroSize' | 'grainId' | 'isExport'> = {
     location,
@@ -190,6 +344,7 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
     pm25Label: pm25Tier.label,
     pm25Color: pm25Tier.color,
     minutesOutside,
+    qrDataUrl,
   };
 
   const generatePng = async (): Promise<string | null> => {
@@ -203,7 +358,7 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
       const dataUrl = await generatePng();
       if (!dataUrl) return;
       const link = document.createElement('a');
-      link.download = `delhi-air-${location.replace(/, Delhi$/i, '').replace(/\s+/g, '-').toLowerCase()}.png`;
+      link.download = `delhi-air-${cleanLocation.replace(/\s+/g, '-').toLowerCase()}.png`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -227,12 +382,11 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
           await navigator.share({
             files: [file],
             title: 'How Many Cigarettes?',
-            text: `I "smoke" ${formatCigCount(cigarettes)} cigarettes ${formatDuration(minutesOutside) === 'a year' ? 'a year' : `in ${formatDuration(minutesOutside)}`} just by breathing the air in ${location.replace(/, Delhi$/i, '')}. Check yours →`,
+            text: `I "smoke" ${formatCigCount(cigarettes)} cigarettes ${formatDuration(minutesOutside) === 'a year' ? 'a year' : `in ${formatDuration(minutesOutside)}`} just by breathing the air in ${cleanLocation}. Check yours →`,
           });
           return;
         } catch (e) {
           if ((e as Error).name === 'AbortError') return;
-          // fall through to modal
         }
       }
 
@@ -296,7 +450,6 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
         <CardContent {...sharedProps} heroSize={240} grainId={exportGrainId} isExport />
       </div>
 
-      {/* ── Share modal ───────────────────────────────────────────────────── */}
       {shareModalOpen && (
         <ShareModal
           cigarettes={cigarettes}

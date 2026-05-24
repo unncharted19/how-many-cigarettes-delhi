@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { Cigarette, AlertCircle } from 'lucide-react';
 import { useDelhiAQI } from './hooks/useDelhiAQI';
@@ -10,6 +10,8 @@ import { ShareCard } from './components/ShareCard';
 import { Station } from './hooks/useDelhiAQI';
 import { LocationResult } from './types';
 
+const VALID_MINUTES = [1440, 10080, 43200, 525600];
+
 function App() {
   const { data: stations, loading, error, stale } = useDelhiAQI();
   const [minutesOutside, setMinutesOutside] = useState(43200);
@@ -17,6 +19,35 @@ function App() {
   const [locationName, setLocationName] = useState('NCR Average');
   const [distance, setDistance] = useState<number | undefined>(undefined);
   const [mapInstance, setMapInstance] = useState<MapLibreMap | null>(null);
+  const pendingLocationRef = useRef<string | null>(null);
+  const locationRestoredRef = useRef(false);
+
+  // Restore time + location from QR/shared URL on mount
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const timeParam = params.get('time');
+    const locationParam = params.get('location');
+    const parsed = Number(timeParam);
+    if (timeParam && VALID_MINUTES.includes(parsed)) setMinutesOutside(parsed);
+    if (locationParam) pendingLocationRef.current = locationParam;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Once stations load, fuzzy-match the pending location
+  useEffect(() => {
+    if (stations.length === 0 || locationRestoredRef.current || !pendingLocationRef.current) return;
+    locationRestoredRef.current = true;
+    const loc = pendingLocationRef.current.toLowerCase();
+    pendingLocationRef.current = null;
+    const match = stations.find(s => {
+      const clean = cleanStationName(s.name).toLowerCase();
+      return clean === loc || clean.includes(loc) || loc.includes(clean);
+    });
+    if (match) {
+      setSelectedStation(match);
+      setLocationName(cleanStationName(match.name));
+      setDistance(undefined);
+    }
+  }, [stations]);
 
   const delhiAverageStation = stations.length > 0
     ? {
