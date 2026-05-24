@@ -26,12 +26,13 @@ function getCardGradient(tierLabel: string): string {
 
 // ── Cigarette Grid ─────────────────────────────────────────────────────────────
 
-function CigaretteGrid({ count, scale = 1 }: { count: number; scale?: number }) {
+function CigaretteGrid({ count, scale = 1, compact }: { count: number; scale?: number; compact?: boolean }) {
   const capped = Math.min(Math.max(Math.round(count), 0), 5000);
   const overflow = Math.round(count) > 5000 ? Math.round(count) - 5000 : 0;
 
   let w: number, h: number, gap: number;
-  if      (capped < 50)   { w = 24;  h = 5;   gap = 7;   }
+  if (compact)            { w = 4;   h = 1.5; gap = 1.5; }
+  else if (capped < 50)   { w = 24;  h = 5;   gap = 7;   }
   else if (capped < 200)  { w = 16;  h = 4;   gap = 5;   }
   else if (capped < 500)  { w = 10;  h = 3;   gap = 3;   }
   else if (capped < 1500) { w = 7;   h = 2;   gap = 2;   }
@@ -244,44 +245,69 @@ function CardContent({
     );
   }
 
-  // Inline 16:9 — 2-column layout
+  // Inline — responsive: single-column on mobile, 2-column on desktop
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+    <div className="relative w-full overflow-hidden sm:h-full">
       <Grain id={grainId} />
-      <div style={{
-        position: 'relative', zIndex: 1,
-        display: 'flex', flexDirection: 'column',
-        height: '100%',
-        padding: '22px 28px',
-        boxSizing: 'border-box',
-      }}>
-        {/* Eyebrow */}
+
+      {/* ── MOBILE layout (<640px): single column, auto height ───────────── */}
+      <div
+        className="block sm:hidden relative z-[1] flex flex-col gap-2"
+        style={{ padding: '18px 20px 16px', fontFamily: 'system-ui, sans-serif' }}
+      >
+        <div style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
+          Your Air · Delhi NCR
+        </div>
+        <div style={{ fontSize: 'clamp(48px, 15vw, 68px)', fontWeight: 700, lineHeight: 0.88, color: tierColor }}>
+          {formatCigCount(cigarettes)}
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 400, color: 'rgba(255,255,255,0.88)' }}>cigarettes</div>
+        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.4 }}>
+          in {formatDuration(minutesOutside)} of breathing the air in{' '}
+          <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{cleanLocation}</span>
+        </div>
+        <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>
+          {distance !== undefined ? `${distance.toFixed(1)} km from ${stationLabel}` : 'CPCB monitor'}
+        </div>
+        <BreakdownLadder pm25={pm25} minutesOutside={minutesOutside} tierColor={tierColor} />
+        <div style={{ overflow: 'hidden', maxHeight: 96 }}>
+          <CigaretteGrid count={cigCount} compact />
+        </div>
+        {qrDataUrl && (
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <QrBlock qrDataUrl={qrDataUrl} size={56} />
+          </div>
+        )}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 10, marginTop: 2 }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: pm25Color }}>{pm25Label}</span>
+          <span style={{ fontSize: 11, fontWeight: 400, color: 'rgba(255,255,255,0.45)', marginLeft: 8 }}>
+            PM2.5 {pm25} µg/m³
+          </span>
+        </div>
+      </div>
+
+      {/* ── DESKTOP layout (≥640px): 2-column, fills sm:aspect-video ────────── */}
+      <div
+        className="hidden sm:flex flex-col absolute inset-0 z-[1]"
+        style={{ padding: '22px 28px', boxSizing: 'border-box', fontFamily: 'system-ui, sans-serif' }}
+      >
         <div style={{
           fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.55)',
           letterSpacing: '0.12em', textTransform: 'uppercase',
-          marginBottom: 10, fontFamily: 'system-ui, sans-serif', flexShrink: 0,
+          marginBottom: 10, flexShrink: 0,
         }}>
           Your Air · Delhi NCR
         </div>
 
-        {/* 2-column main row */}
         <div style={{ flex: 1, display: 'flex', gap: 16, minHeight: 0 }}>
-
-          {/* LEFT — hero, ladder */}
           <div style={{ flex: '0 0 55%', display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-            <div style={{
-              fontSize: 'clamp(52px, 14vw, 140px)',
-              fontWeight: 700, lineHeight: 0.88,
-              color: tierColor,
-              fontFamily: 'system-ui, sans-serif',
-              marginBottom: 6,
-            }}>
+            <div style={{ fontSize: 'clamp(52px, 14vw, 140px)', fontWeight: 700, lineHeight: 0.88, color: tierColor, marginBottom: 6 }}>
               {formatCigCount(cigarettes)}
             </div>
-            <div style={{ fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.88)', fontFamily: 'system-ui, sans-serif', marginBottom: 6 }}>
+            <div style={{ fontSize: 20, fontWeight: 400, color: 'rgba(255,255,255,0.88)', marginBottom: 6 }}>
               cigarettes
             </div>
-            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.62)', fontFamily: 'system-ui, sans-serif', lineHeight: 1.4 }}>
+            <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.62)', lineHeight: 1.4 }}>
               in {formatDuration(minutesOutside)} of breathing the air in{' '}
               <span style={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600 }}>{cleanLocation}</span>
             </div>
@@ -289,7 +315,6 @@ function CardContent({
             <div style={{ flex: 1 }} />
           </div>
 
-          {/* RIGHT — cigarette grid + QR */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', minWidth: 0, overflow: 'hidden' }}>
             <div style={{ flex: 1, width: '100%', overflow: 'hidden' }}>
               <CigaretteGrid count={cigCount} />
@@ -402,8 +427,8 @@ export function ShareCard({ location, distance, station, minutesOutside }: Share
     <>
       {/* ── Inline 16:9 preview ───────────────────────────────────────────── */}
       <div
-        className="w-full rounded-2xl overflow-hidden"
-        style={{ aspectRatio: '16/9', background: gradient }}
+        className="w-full rounded-2xl overflow-hidden sm:aspect-video"
+        style={{ background: gradient }}
       >
         <CardContent {...sharedProps} heroSize={140} grainId={inlineGrainId} />
       </div>
